@@ -6,7 +6,9 @@ let peerConnection;
 const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
-
+document.getElementById("start-call").addEventListener("click", () => {
+  console.log("Кнопка нажата!");
+});
 startButton.addEventListener("click", async () => {
   peerConnection = new RTCPeerConnection(config);
 

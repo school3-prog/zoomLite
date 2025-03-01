@@ -10,7 +10,9 @@ document.getElementById("start-call").addEventListener("click", () => {
   console.log("Кнопка нажата!");
 });
 startButton.addEventListener("click", async () => {
+  console.log("Создаю RTCPeerConnection...");
   peerConnection = new RTCPeerConnection(config);
+  console.log("RTCPeerConnection создан:", peerConnection);
 
   // Логирование ICE-кандидатов
   peerConnection.onicecandidate = (event) => {
@@ -20,11 +22,19 @@ startButton.addEventListener("click", async () => {
     }
   };
 
-  // Создание offer SDP
+  console.log("Запрашиваю доступ к камере и микрофону...");
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    console.log("Камера и микрофон получены!", stream);
+  } catch (error) {
+    console.error("Ошибка доступа к камере/микрофону:", error);
+  }
+
+  console.log("Создаю SDP Offer...");
   const offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
+  console.log("SDP Offer создан:", offer);
 
-  // Ждем установки локального SDP и отправляем его на сервер
   peerConnection.onicegatheringstatechange = () => {
     if (peerConnection.iceGatheringState === "complete") {
       console.log("Ваш SDP:", peerConnection.localDescription.sdp);

@@ -1,28 +1,35 @@
-// functions/sdp-signal.js
-const { parse } = require('querystring');
+let connections = {}; // Временное хранилище
 
-exports.handler = async (event, context) => {
-  if (event.httpMethod === 'POST') {
-    const body = await new Promise((resolve, reject) => {
-      let data = '';
-      event.body.on('data', chunk => data += chunk);
-      event.body.on('end', () => resolve(data));
-    });
+exports.handler = async (event) => {
+  if (event.httpMethod === "POST") {
+    const data = JSON.parse(event.body);
 
-    const parsedBody = parse(body);
-    const { sdp, iceCandidate } = parsedBody;
+    if (data.type === "sdp") {
+      const key = data.sdp.type === "offer" ? "offer" : "answer";
+      connections[key] = data.sdp;
+      
+      if (connections.offer && connections.answer) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ offer: connections.offer, answer: connections.answer })
+        };
+      }
+      
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: `SDP ${key} получен` })
+      };
+    }
 
-    // Здесь ты можешь обработать и отправить данные через WebSocket или другим способом.
-    // Например, передача SDP или ICE-кандидатов в WebSocket
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: "Signal received" })
-    };
+    if (data.type === "ice") {
+      if (!connections.ice) connections.ice = [];
+      connections.ice.push(data.candidate);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "ICE-кандидат получен" })
+      };
+    }
   }
 
-  return {
-    statusCode: 405,
-    body: JSON.stringify({ message: "Method not allowed" })
-  };
+  return { statusCode: 405, body: "Метод не разрешен" };
 };

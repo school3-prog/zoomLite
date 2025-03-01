@@ -1,0 +1,10 @@
+{
+    "name": "webrtc-app",
+    "version": "1.0.0",
+    "scripts": {
+      "start": "netlify dev"
+    },
+    "dependencies": {
+      "ws": "^8.0.1"
+    }
+  }

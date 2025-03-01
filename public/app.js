@@ -6,15 +6,13 @@ let peerConnection;
 const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
-document.getElementById("start-call").addEventListener("click", () => {
-  console.log("Кнопка нажата!");
-});
+
+
 startButton.addEventListener("click", async () => {
   console.log("Создаю RTCPeerConnection...");
   peerConnection = new RTCPeerConnection(config);
   console.log("RTCPeerConnection создан:", peerConnection);
 
-  // Логирование ICE-кандидатов
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       console.log("Новый ICE-кандидат:", event.candidate);
@@ -26,6 +24,12 @@ startButton.addEventListener("click", async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     console.log("Камера и микрофон получены!", stream);
+
+    // Включаем видео
+    const videoElement = document.getElementById("localVideo");
+    videoElement.srcObject = stream;
+    videoElement.play();
+
   } catch (error) {
     console.error("Ошибка доступа к камере/микрофону:", error);
   }
@@ -35,9 +39,14 @@ startButton.addEventListener("click", async () => {
   await peerConnection.setLocalDescription(offer);
   console.log("SDP Offer создан:", offer);
 
+  // Сразу добавляем в поле SDP
+  console.log("Ваш SDP (немедленный вывод):", peerConnection.localDescription.sdp);
+  sdpField.value = peerConnection.localDescription.sdp;
+  sendSignal({ type: "sdp", sdp: peerConnection.localDescription });
+
   peerConnection.onicegatheringstatechange = () => {
     if (peerConnection.iceGatheringState === "complete") {
-      console.log("Ваш SDP:", peerConnection.localDescription.sdp);
+      console.log("Ваш SDP (ICE-кандидаты завершены):", peerConnection.localDescription.sdp);
       sdpField.value = peerConnection.localDescription.sdp;
       sendSignal({ type: "sdp", sdp: peerConnection.localDescription });
     }
